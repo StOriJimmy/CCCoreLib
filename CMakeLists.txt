@@ -13,11 +13,26 @@ project( CCCoreLib
 )
 
 # Options
-option( CC-CORE-LIB_USE_CGAL "Compile CCCoreLib with CGAL (to enable Delaunay 2.5D triangulation with a GPL compliant licence)" OFF )
-option( CC-CORE-LIB_USE_TBB "Compile CCCoreLib with Intel Threading Building Blocks lib (enables some parallel processing )" OFF )
-option( CC-CORE-LIB_USE_QT "Compile CCCoreLib with Qt (to enable parallel processing)" ON )
-option( CC-CORE-LIB_SHARED "Compile CCCoreLib as a shared library" ON )
-option( CC-CORE-LIB_SCALAR_DOUBLE "Define ScalarType as double (instead of float)" OFF )
+option( CC-CORE-LIB_USE_CGAL
+	"Compile CCCoreLib with CGAL (to enable Delaunay 2.5D triangulation with a GPL-compliant licence)"
+	OFF
+)
+option( CC-CORE-LIB_USE_TBB
+	"Compile CCCoreLib with Intel Threading Building Blocks lib (enables some parallel processing )"
+	OFF
+)
+option( CC-CORE-LIB_USE_QT
+	"Compile CCCoreLib with Qt (to enable parallel processing)"
+	ON
+)
+option( CC-CORE-LIB_SHARED
+	"Compile CCCoreLib as a shared library"
+	ON
+)
+option( CC-CORE-LIB_SCALAR_DOUBLE
+	"Define ScalarType as double (instead of float)"
+	OFF
+)
 
 # Add the library (shared or static)
 if ( CC-CORE-LIB_SHARED )
@@ -65,9 +80,9 @@ install(
 )
 
 target_include_directories( CCCoreLib 
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/exports>
-        $<INSTALL_INTERFACE:include/CCCoreLib>
+	PUBLIC
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/exports>
+		$<INSTALL_INTERFACE:include/CCCoreLib>
 )
 
 # ccache
@@ -117,7 +132,10 @@ endif()
 # Windows-specific flags
 if ( WIN32 )
 	# VLD for mem leak checking
-	option( CC-CORE-LIB_USE_VISUAL_LEAK_DETECTOR "Check to activate compilation (in debug) with Visual Leak Detector" OFF )
+	option( CC-CORE-LIB_USE_VISUAL_LEAK_DETECTOR
+		"Check to activate compilation (in debug) with Visual Leak Detector"
+		OFF
+	)
 
 	if ( CC-CORE-LIB_USE_VISUAL_LEAK_DETECTOR )
 		target_compile_definitions( CCCoreLib
@@ -126,7 +144,8 @@ if ( WIN32 )
 		)
 	endif()
 
-	# Disable SECURE_SCL (see http://channel9.msdn.com/shows/Going+Deep/STL-Iterator-Debugging-and-Secure-SCL/)
+	# Disable SECURE_SCL
+	# See https://channel9.msdn.com/shows/Going+Deep/STL-Iterator-Debugging-and-Secure-SCL/
 	target_compile_definitions( CCCoreLib
 		PRIVATE
 			"$<$<CONFIG:RELEASE>:_SECURE_SCL=0>"
@@ -136,47 +155,47 @@ if ( WIN32 )
 		PRIVATE
 			_CRT_SECURE_NO_WARNINGS
 			__STDC_LIMIT_MACROS
-            NOMINMAX
+			NOMINMAX
 	)
 endif()
 
 # TBB (optional)
 # Must come before CGAL so it can use TBB properly
 if ( CC-CORE-LIB_USE_TBB )
-	find_package( TBB )
+	find_package( TBB COMPONENTS tbb )
 
-    if ( TBB_FOUND )
-        target_link_libraries( CCCoreLib
-            PUBLIC
-                ${TBB_IMPORTED_TARGETS}
-        )
-    
-        target_compile_definitions( CCCoreLib
-            PUBLIC
-                USE_TBB
-        )
-    endif()
+	if ( TBB_FOUND )
+		target_link_libraries( CCCoreLib
+			PUBLIC
+				${TBB_IMPORTED_TARGETS}
+		)
+	
+		target_compile_definitions( CCCoreLib
+			PUBLIC
+				USE_TBB
+		)
+	endif()
 endif()
 
 # CGAL (optional)
 if ( CC-CORE-LIB_USE_CGAL )
 	find_package( CGAL REQUIRED )
 
-    if ( CC-CORE-LIB_USE_TBB )
-        if ( TBB_FOUND )
-            # Once Linux libcgal-dev >= 5.0, target_compile_definitions replaced by:
-            #  CGAL_target_use_TBB( CCCoreLib )
-    
-            target_compile_definitions( CCCoreLib
-                PRIVATE
-                    CGAL_LINKED_WITH_TBB
-                    NOMINMAX
-            )
-        else()
-            message( WARNING "CGAL cannot compile with TBB (TBB not found)" )
-        endif()
-    endif()
-    
+	if ( CC-CORE-LIB_USE_TBB )
+		if ( TBB_FOUND )
+			# Once Linux libcgal-dev >= 5.0, target_compile_definitions replaced by:
+			#  CGAL_target_use_TBB( CCCoreLib )
+	
+			target_compile_definitions( CCCoreLib
+				PRIVATE
+					CGAL_LINKED_WITH_TBB
+					NOMINMAX
+			)
+		else()
+			message( WARNING "CGAL cannot compile with TBB (TBB not found)" )
+		endif()
+	endif()
+	
 	target_link_libraries( CCCoreLib
 		PUBLIC
 			CGAL::CGAL
@@ -190,18 +209,6 @@ endif()
 
 # QT (optional)
 if ( CC-CORE-LIB_USE_QT )
-	if ( !QT5_ROOT_PATH )
-		set( QT5_ROOT_PATH CACHE PATH "Qt5 root directory (i.e. where the 'bin' folder lies)" )
-	endif()
-
-	if ( QT5_ROOT_PATH )
-		list( APPEND CMAKE_PREFIX_PATH ${QT5_ROOT_PATH} )
-	endif()
-
-	set( CMAKE_AUTOMOC ON )
-	set( CMAKE_AUTORCC ON )
-	set( CMAKE_AUTOUIC ON )
-
 	find_package( Qt5
 		COMPONENTS
 			Concurrent
@@ -210,22 +217,26 @@ if ( CC-CORE-LIB_USE_QT )
 		REQUIRED
 	)
 
+	set( CMAKE_AUTOMOC ON )
+	set( CMAKE_AUTORCC ON )
+	set( CMAKE_AUTOUIC ON )
+
 	target_link_libraries( CCCoreLib
 		PUBLIC
 			Qt5::Concurrent
-			Qt5::Core
 			Qt5::Widgets
 	)
 
 	target_compile_definitions( CCCoreLib
 		PUBLIC
-			QT_USE_QSTRINGBUILDER
 			USE_QT
+		PRIVATE
+			QT_USE_QSTRINGBUILDER
 	)
 endif()
 
 # Install
-# Details here: https://cliutils.gitlab.io/modern-cmake/chapters/install/installing.html
+# See: https://cliutils.gitlab.io/modern-cmake/chapters/install/installing.html
 install(
 	TARGETS
 		CCCoreLib
